@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eventra | Event Planner AI</title>
+<style>
+  :root {
+    --rosegold: #c9748b;
+    --rosegold-dark: #a4526b;
+    --lavender: #9b8cf2;
+    --gold: #f4c76b;
+    --card: #ffffff;
+    --panel: #fdf7fa;
+    --text-dark: #2f2233;
+    --text-muted: #8a7a91;
+    --border: #f1e2e9;
+    --shadow: 0 20px 45px rgba(201, 116, 139, 0.2);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #faf0f5, #f2effc);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 780px;
+    height: 90vh;
+    max-height: 840px;
+    background: var(--card);
+    border-radius: 26px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .app-header {
+    background: linear-gradient(120deg, var(--rosegold), var(--lavender));
+    color: #fff;
+    padding: 22px 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-header::before {
+    content: "🎉 🎈 🎂 ✨ 🎊";
+    position: absolute;
+    right: -8px;
+    top: -12px;
+    font-size: 42px;
+    opacity: 0.18;
+    letter-spacing: 6px;
+  }
+
+  .app-header .icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+    z-index: 1;
+  }
+
+  .app-header .titles { z-index: 1; }
+
+  .app-header .titles h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
+  }
+
+  .app-header .titles p {
+    margin: 3px 0 0;
+    font-size: 12.5px;
+    opacity: 0.92;
+  }
+
+  .status-pill {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 999px;
+    z-index: 1;
+  }
+
+  .status-pill .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 6px var(--gold);
+  }
+
+  .disclaimer {
+    background: #fdf2f7;
+    color: #99506a;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chat-window {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--panel);
+  }
+
+  .message-row {
+    display: flex;
+    gap: 10px;
+    max-width: 85%;
+    animation: rise 0.25s ease;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message-row.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 17px;
+  }
+
+  .avatar.bot { background: #f6e3ea; color: var(--rosegold-dark); }
+  .avatar.user { background: #ece6fc; color: var(--lavender); }
+
+  .bubble {
+    padding: 13px 17px;
+    border-radius: 18px;
+    line-height: 1.55;
+    font-size: 14.5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .message-row.bot .bubble {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    border-top-left-radius: 4px;
+  }
+
+  .message-row.user .bubble {
+    background: linear-gradient(120deg, var(--lavender), #b3a6f7);
+    color: #fff;
+    border-top-right-radius: 4px;
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 14px 16px;
+  }
+
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--rosegold);
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: blink 1.2s infinite;
+  }
+
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+  }
+
+  .quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 22px 14px;
+    background: var(--panel);
+  }
+
+  .chip {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--rosegold-dark);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .chip:hover {
+    background: var(--rosegold);
+    color: #fff;
+    border-color: var(--rosegold);
+  }
+
+  .input-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+  }
+
+  #user-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 13px 18px;
+    font-size: 14.5px;
+    outline: none;
+    background: #fdf8fb;
+    color: var(--text-dark);
+  }
+
+  #user-input:focus {
+    border-color: var(--rosegold);
+    background: #fff;
+  }
+
+  #send-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--rosegold), var(--lavender));
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, filter 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  #send-btn:hover { filter: brightness(1.08); }
+  #send-btn:active { transform: scale(0.94); }
+  #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .chat-window::-webkit-scrollbar { width: 6px; }
+  .chat-window::-webkit-scrollbar-thumb {
+    background: #ecd8e1;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .app-shell { height: 95vh; border-radius: 18px; }
+    .message-row { max-width: 92%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <div class="app-header">
+    <div class="icon">🎉</div>
+    <div class="titles">
+      <h1>Eventra</h1>
+      <p>Your AI event planning assistant</p>
+    </div>
+    <div class="status-pill"><span class="dot"></span>Online</div>
+  </div>
+
+  <div class="disclaimer">
+    Eventra gives general event-planning ideas only — it can't book real venues or vendors.
+  </div>
+
+  <div class="chat-window" id="chat-window">
+    <div class="message-row bot">
+      <div class="avatar bot">🎉</div>
+      <div class="bubble">
+        Hi, I'm Eventra! 🎊 Tell me what you're celebrating and I'll help you plan themes, decorations, timelines, and more.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-chips">
+    <div class="chip" data-text="Help me plan a birthday party theme for a 10-year-old">Birthday theme ideas</div>
+    <div class="chip" data-text="Create a checklist for planning a wedding 6 months out">Wedding checklist</div>
+    <div class="chip" data-text="Suggest a budget breakdown for a 50-guest corporate event">Budget planning</div>
+    <div class="chip" data-text="Give me fun activity ideas for a baby shower">Party activities</div>
+  </div>
+
+  <div class="input-bar">
+    <input type="text" id="user-input" placeholder="Ask Eventra about your event..." autocomplete="off">
+    <button id="send-btn" aria-label="Send message">➤</button>
+  </div>
+
+</div>
+
+<script>
+  const chatWindow = document.getElementById("chat-window");
+  const userInput = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+  const chips = document.querySelectorAll(".chip");
+
+  function scrollToBottom() {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function appendMessage(text, sender) {
+    const row = document.createElement("div");
+    row.className = "message-row " + sender;
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar " + sender;
+    avatar.textContent = sender === "user" ? "🙂" : "🎉";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    chatWindow.appendChild(row);
+    scrollToBottom();
+    return bubble;
+  }
+
+  function showTyping() {
+    const row = document.createElement("div");
+    row.className = "message-row bot";
+    row.id = "typing-row";
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar bot";
+    avatar.textContent = "🎉";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble typing-indicator";
+    bubble.innerHTML = "<span></span><span></span><span></span>";
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    chatWindow.appendChild(row);
+    scrollToBottom();
+  }
+
+  function removeTyping() {
+    const row = document.getElementById("typing-row");
+    if (row) row.remove();
+  }
+
+  async function sendMessage(text) {
+    const message = (text || userInput.value).trim();
+    if (!message) return;
+
+    appendMessage(message, "user");
+    userInput.value = "";
+    sendBtn.disabled = true;
+    showTyping();
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (res.ok) {
+        appendMessage(data.reply, "bot");
+      } else {
+        appendMessage(data.error || "Something went wrong. Please try again.", "bot");
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage("Network error. Please check your connection and try again.", "bot");
+    } finally {
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+
+  sendBtn.addEventListener("click", () => sendMessage());
+
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => sendMessage(chip.dataset.text));
+  });
+</script>
+
+</body>
+</html>
